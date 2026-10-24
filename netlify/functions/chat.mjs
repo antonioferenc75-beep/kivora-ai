@@ -90,7 +90,7 @@ export default async (req) => {
             contents,
             generationConfig: {
               temperature: 0.55,
-              maxOutputTokens: 2200
+              maxOutputTokens: 1600
             }
           })
         }
