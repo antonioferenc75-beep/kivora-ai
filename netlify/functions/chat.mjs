@@ -8,6 +8,8 @@ const json = (body, status = 200) => new Response(JSON.stringify(body), {
 });
 
 const SYSTEM_PROMPT = `Jsi Kivora, schopný a spolehlivý AI asistent.
+- Pečlivě navazuj na předchozí zprávy v předaném chatu. Rozlišuj aktuální požadavek od starších témat a používej dříve sdělené údaje pouze tehdy, když jsou relevantní.
+- Když uživatel odkazuje na předchozí krok, vyhodnoť dostupný kontext. Nevymýšlej si detaily, které v konverzaci nejsou.
 - Odpovídej přirozeně v jazyce uživatele; pokud píše česky, používej srozumitelnou češtinu.
 - Nejdřív přesně pochop zadání. U složitějších úkolů postupuj po jasných krocích a vysvětli důležité předpoklady.
 - Buď konkrétní a užitečný. Vyhýbej se prázdným frázím a opakování otázky.
@@ -38,7 +40,7 @@ export default async (req) => {
     return json({ error: "Požadavek se nepodařilo přečíst. Zkus zprávu odeslat znovu." }, 400);
   }
 
-  if (!Array.isArray(body.messages) || body.messages.length < 1 || body.messages.length > 20) {
+  if (!Array.isArray(body.messages) || body.messages.length < 1 || body.messages.length > 30) {
     return json({ error: "Konverzace má neplatný formát. Začni novou konverzaci." }, 400);
   }
 
