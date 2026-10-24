@@ -10,6 +10,40 @@
 @media(max-width:720px){.app{grid-template-columns:1fr;padding:0;gap:0}.sidebar{display:none}.main{border:0;border-radius:0}.top{height:58px;padding:0 14px}.sub{display:none}.messages{padding:18px 14px}.orb{width:62px;height:62px}.suggestions{gap:7px}.suggestion{padding:10px}.composer-wrap{padding:10px 11px calc(10px + env(safe-area-inset-bottom))}.content{font-size:13px}.msg{grid-template-columns:29px minmax(0,1fr);gap:9px}.avatar{width:29px;height:29px}}@media(max-width:350px){.suggestions{grid-template-columns:1fr}}
 
 button:focus-visible,textarea:focus-visible{outline:2px solid var(--mint);outline-offset:3px}.msg .body{min-width:0}.msg.user .content{display:inline-block;max-width:100%;background:#172b32;border:1px solid #24464b;border-radius:4px 15px 15px 15px;padding:11px 13px}.top-left{display:flex;align-items:center;gap:10px;min-width:0}.menu-toggle{display:none;width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:#151b29;color:#eef2ff;font-size:20px}.menu-backdrop{display:none}@media(max-width:720px){.sidebar{display:flex;position:fixed;z-index:30;inset:0 auto 0 0;width:min(84vw,320px);border-radius:0 22px 22px 0;transform:translateX(-105%);transition:transform .22s ease;box-shadow:18px 0 50px #0008}.menu-open .sidebar{transform:translateX(0)}.menu-backdrop{display:block;position:fixed;inset:0;z-index:20;background:#0009;opacity:0;pointer-events:none;transition:opacity .22s}.menu-open .menu-backdrop{opacity:1;pointer-events:auto}.top{height:64px;padding:0 13px}.menu-toggle{display:block;flex-shrink:0}.top .sub{display:none}.suggestion{min-height:74px}.send{width:44px;height:44px}.disclaimer{line-height:1.5}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;scroll-behavior:auto!important}}
+
+/* Kivora polish: smooth motion, glass panels, responsive micro-interactions */
+:root{--glow:rgba(169,154,255,.16)}
+body{background:radial-gradient(ellipse at 12% 0%,#30265b 0,transparent 42%),radial-gradient(ellipse at 95% 55%,#103d3c 0,transparent 32%),#080a12;background-attachment:fixed}
+.sidebar,.main{background:linear-gradient(155deg,rgba(19,24,41,.96),rgba(10,14,25,.96));box-shadow:0 18px 60px #0002}
+.mark,.orb{box-shadow:0 0 34px var(--glow);animation:floatGlow 5s ease-in-out infinite}
+.orb{position:relative}
+.orb:after{content:"";position:absolute;inset:-7px;border:1px solid #b5a8ff55;border-radius:inherit;animation:orbPulse 3s ease-out infinite}
+.brand{letter-spacing:-.4px}
+.new,.suggestion,.send,.menu-toggle,.status,.copy{transition:transform .18s ease,border-color .18s ease,background .18s ease,box-shadow .18s ease}
+.new:hover,.suggestion:hover{border-color:#8275c9;background:#1b2034;box-shadow:0 8px 24px #0002;transform:translateY(-2px)}
+.suggestion{background:linear-gradient(145deg,#151b2b,#101522)}
+.send:hover{transform:translateY(-2px) scale(1.04);box-shadow:0 5px 22px #8ddecf35}
+.send:active,.new:active,.suggestion:active{transform:scale(.97)}
+.status{background:#132522}
+.messages{scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:#38435e transparent}
+.msg{animation:messageIn .28s cubic-bezier(.2,.7,.2,1) both}
+.msg.user{animation-name:userIn}
+.content{white-space:pre-wrap}
+.typing{display:inline-flex;align-items:center;gap:5px;color:#aeb9d2;padding:7px 0}
+.typing i{width:6px;height:6px;border-radius:50%;background:var(--mint);animation:typingBounce 1s ease-in-out infinite}
+.typing i:nth-child(2){animation-delay:.14s}.typing i:nth-child(3){animation-delay:.28s}
+@keyframes messageIn{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
+@keyframes userIn{from{opacity:0;transform:translateY(7px) scale(.99)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes typingBounce{0%,60%,100%{transform:translateY(0);opacity:.55}30%{transform:translateY(-5px);opacity:1}}
+@keyframes floatGlow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.12)}}
+@keyframes orbPulse{0%{transform:scale(.96);opacity:.65}100%{transform:scale(1.18);opacity:0}}
+.composer{transition:border-color .2s,box-shadow .2s}
+.composer:focus-within{border-color:#8d83d1;box-shadow:0 0 0 3px #a99aff12,0 10px 35px #0002}
+textarea::placeholder{color:#7e8aa5}
+.avatar{flex-shrink:0}
+@media(max-width:720px){.app{background:radial-gradient(ellipse at 50% -20%,#28204c 0,transparent 45%),#080a12}.main{background:rgba(10,14,25,.88)}.top{backdrop-filter:blur(16px);background:#0c101bd9}.composer-wrap{background:linear-gradient(180deg,#0d111d,#090c15)}.suggestion:hover{transform:none}.orb{margin-bottom:16px}.welcome h1{letter-spacing:-1.2px}}
+@media(prefers-reduced-motion:reduce){.mark,.orb,.orb:after,.msg,.typing i{animation:none!important}}
+
 </style></head>
 <body><div class="menu-backdrop" id="menuBackdrop"></div><div class="app">
 <aside class="sidebar"><div class="brand"><div class="mark">✦</div>Kivora AI</div><button class="new" id="newChat">＋ Nová konverzace</button><div class="sub">NEDÁVNÉ KONVERZACE</div><div class="history" id="history"></div><div class="side-note">Piš česky nebo jiným jazykem. Odpovědi AI si u důležitých rozhodnutí ověř.</div></aside>
@@ -29,6 +63,6 @@ function toast(s){const t=$('toast');t.textContent=s;t.classList.add('show');set
 function resizePrompt(){const t=$('prompt');t.style.height='auto';t.style.height=Math.min(t.scrollHeight,170)+'px'}
 function closeMenu(){document.body.classList.remove('menu-open');$('menuToggle').setAttribute('aria-expanded','false');$('menuToggle').setAttribute('aria-label','Otevřít menu')}function newConversation(){activeId=null;showWelcome();closeMenu();$('prompt').focus()}$('menuToggle').onclick=()=>{const open=!document.body.classList.contains('menu-open');document.body.classList.toggle('menu-open',open);$('menuToggle').setAttribute('aria-expanded',String(open));$('menuToggle').setAttribute('aria-label',open?'Zavřít menu':'Otevřít menu')};$('menuBackdrop').onclick=closeMenu;
 $('newChat').onclick=newConversation;$('prompt').oninput=resizePrompt;$('prompt').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('chatForm').requestSubmit()}};
-$('chatForm').onsubmit=async e=>{e.preventDefault();if(busy)return;const text=$('prompt').value.trim();if(!text)return;if(!activeId){activeId=makeId();conversations.push({id:activeId,title:text.slice(0,42),messages:[]})}const c=active();c.messages.push({role:'user',content:text});if(c.messages.length===1)c.title=text.slice(0,42);appendMessage('user',text);$('prompt').value='';resizePrompt();busy=true;$('send').disabled=true;const typing=appendMessage('assistant','Kivora přemýšlí…');renderHistory();save();try{const messages=c.messages.slice(-20).map(m=>({role:m.role==='assistant'?'model':'user',content:m.content}));const res=await fetch('/.netlify/functions/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages})});const data=await res.json().catch(()=>({error:'Server vrátil nečitelnou odpověď.'}));if(!res.ok)throw new Error(data.error||'AI se nepodařilo odpovědět.');const answer=String(data.reply||'AI nevrátila odpověď.');c.messages.push({role:'assistant',content:answer});typing.remove();appendMessage('assistant',answer);save()}catch(err){typing.remove();appendMessage('assistant','Nepodařilo se získat odpověď. '+(err.message==='Failed to fetch'?'Web musí být nasazený na Netlify a musí mít nastavený GEMINI_API_KEY.':err.message))}finally{busy=false;$('send').disabled=false;$('prompt').focus();renderHistory()}};
+$('chatForm').onsubmit=async e=>{e.preventDefault();if(busy)return;const text=$('prompt').value.trim();if(!text)return;if(!activeId){activeId=makeId();conversations.push({id:activeId,title:text.slice(0,42),messages:[]})}const c=active();c.messages.push({role:'user',content:text});if(c.messages.length===1)c.title=text.slice(0,42);appendMessage('user',text);$('prompt').value='';resizePrompt();busy=true;$('send').disabled=true;const typing=appendMessage('assistant','');const typingText=typing.querySelector('.content');typingText.innerHTML='<span class="typing" role="status" aria-label="Kivora připravuje odpověď">Přemýšlím <i></i><i></i><i></i></span>';renderHistory();save();try{const messages=c.messages.slice(-20).map(m=>({role:m.role==='assistant'?'model':'user',content:m.content}));const res=await fetch('/.netlify/functions/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages})});const data=await res.json().catch(()=>({error:'Server vrátil nečitelnou odpověď.'}));if(!res.ok)throw new Error(data.error||'AI se nepodařilo odpovědět.');const answer=String(data.reply||'AI nevrátila odpověď.');c.messages.push({role:'assistant',content:answer});typing.remove();appendMessage('assistant',answer);save()}catch(err){typing.remove();appendMessage('assistant','Nepodařilo se získat odpověď. '+(err.message==='Failed to fetch'?'Web musí být nasazený na Netlify a musí mít nastavený GEMINI_API_KEY.':err.message))}finally{busy=false;$('send').disabled=false;$('prompt').focus();renderHistory()}};
 try{const stored=JSON.parse(localStorage.getItem(STORE)||'[]');if(Array.isArray(stored))conversations=stored}catch{}renderHistory();showWelcome();if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/service-worker.js').catch(()=>{}));}
 </script></body></html>
