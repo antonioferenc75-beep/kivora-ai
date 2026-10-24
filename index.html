@@ -59,25 +59,7 @@ function showWelcome(){$('messages').innerHTML=welcomeHTML;$('messages').querySe
 function renderHistory(){$('history').innerHTML='';[...conversations].reverse().forEach(c=>{const b=document.createElement('button');b.textContent=c.title||'Nová konverzace';b.onclick=()=>{activeId=c.id;renderMessages();renderHistory();closeMenu()};$('history').append(b)})}
 function renderMessages(){const c=active();if(!c||!c.messages.length){showWelcome();return}$('messages').innerHTML='';c.messages.forEach(m=>appendMessage(m.role,m.content,false));$('messages').scrollTop=$('messages').scrollHeight}
 function escapeHTML(s){return String(s).replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[c]))}
-function renderMarkdown(input){
-  const tick=String.fromCharCode(96), triple=tick.repeat(3), blocks=[];
-  let safe=escapeHTML(input);
-  safe=safe.replace(new RegExp(triple+'([\\w-]*)\\n?([\\s\\S]*?)'+triple,'g'),(_,lang,code)=>{const i=blocks.length;blocks.push('<pre class="code-block"><div class="code-head">'+(lang||'KÓD')+'</div><code>'+code.replace(/\n$/,'')+'</code></pre>');return '%%KIVORABLOCK'+i+'%%';});
-  safe=safe.split('\n').map(line=>{
-    if(/^### /.test(line))return '<h3>'+line.slice(4)+'</h3>';
-    if(/^## /.test(line))return '<h2>'+line.slice(3)+'</h2>';
-    if(/^# /.test(line))return '<h1>'+line.slice(2)+'</h1>';
-    if(/^\s*[-*] /.test(line))return '<li>'+line.replace(/^\s*[-*] /,'')+'</li>';
-    if(/^\s*\d+\. /.test(line))return '<li>'+line.replace(/^\s*\d+\. /,'')+'</li>';
-    return line;
-  }).join('<br>');
-  safe=safe.replace(/(?:<li>.*?<\/li>(?:<br>)?)+/g,m=>'<ul>'+m.replace(/<br>/g,'')+'</ul>');
-  safe=safe.replace(new RegExp(tick+'([^'+tick+'\\n]+)'+tick,'g'),'<code class="inline-code">$1</code>')
-    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
-    .replace(/%%KIVORABLOCK(\d+)%%/g,(_,i)=>blocks[Number(i)]);
-  return safe;
-}
-function appendMessage(role,content,scroll=true){if($('messages').querySelector('.welcome'))$('messages').innerHTML='';const row=document.createElement('article');row.className='msg '+(role==='user'?'user':'assistant');const avatar=document.createElement('div');avatar.className='avatar';avatar.textContent=role==='user'?'TY':'✦';const body=document.createElement('div'),label=document.createElement('div'),txt=document.createElement('div');body.className='body';label.className='label';label.textContent=role==='user'?'TY':'KIVORA AI';txt.className='content';if(role==='assistant')txt.innerHTML=renderMarkdown(content);else txt.textContent=content;body.append(label,txt);if(role==='assistant'){const actions=document.createElement('div');actions.className='actions';const copy=document.createElement('button');copy.className='copy';copy.textContent='Kopírovat';copy.onclick=async()=>{try{await navigator.clipboard.writeText(content);toast('Zkopírováno.')}catch{toast('Kopírování není dostupné.')}};actions.append(copy);body.append(actions)}row.append(avatar,body);$('messages').append(row);if(scroll)$('messages').scrollTop=$('messages').scrollHeight;return row}
+function appendMessage(role,content,scroll=true){if($('messages').querySelector('.welcome'))$('messages').innerHTML='';const row=document.createElement('article');row.className='msg '+(role==='user'?'user':'assistant');const avatar=document.createElement('div');avatar.className='avatar';avatar.textContent=role==='user'?'TY':'✦';const body=document.createElement('div'),label=document.createElement('div'),txt=document.createElement('div');body.className='body';label.className='label';label.textContent=role==='user'?'TY':'KIVORA AI';txt.className='content';txt.textContent=content;body.append(label,txt);if(role==='assistant'){const actions=document.createElement('div');actions.className='actions';const copy=document.createElement('button');copy.className='copy';copy.textContent='Kopírovat';copy.onclick=async()=>{try{await navigator.clipboard.writeText(content);toast('Zkopírováno.')}catch{toast('Kopírování není dostupné.')}};actions.append(copy);body.append(actions)}row.append(avatar,body);$('messages').append(row);if(scroll)$('messages').scrollTop=$('messages').scrollHeight;return row}
 function toast(s){const t=$('toast');t.textContent=s;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600)}
 function resizePrompt(){const t=$('prompt');t.style.height='auto';t.style.height=Math.min(t.scrollHeight,170)+'px'}
 function closeMenu(){document.body.classList.remove('menu-open');$('menuToggle').setAttribute('aria-expanded','false');$('menuToggle').setAttribute('aria-label','Otevřít menu')}function newConversation(){activeId=null;showWelcome();closeMenu();$('prompt').focus()}$('menuToggle').onclick=()=>{const open=!document.body.classList.contains('menu-open');document.body.classList.toggle('menu-open',open);$('menuToggle').setAttribute('aria-expanded',String(open));$('menuToggle').setAttribute('aria-label',open?'Zavřít menu':'Otevřít menu')};$('menuBackdrop').onclick=closeMenu;
