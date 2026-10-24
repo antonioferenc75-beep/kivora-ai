@@ -44,15 +44,18 @@ export default async (req) => {
     return json({ error: "Poslední zpráva musí být od uživatele." }, 400);
   }
 
-  const model = process.env.GEMINI_MODEL || "gemini-3.8-flash";
+  const primaryModel = process.env.GEMINI_MODEL || "gemini-3.6-flash";
+  const modelsToTry = [...new Set([primaryModel, "gemini-3.5-flash-lite"])];
   let upstream;
-  try {
-    upstream = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+  let result = {};
+  for (const model of modelsToTry) {
+    try {
+      upstream = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
           systemInstruction: {
             parts: [{
               text: "Jsi Kivora, užitečný univerzální AI asistent. Odpovídej přirozenou, srozumitelnou češtinou, pokud uživatel nepíše jiným jazykem. Pomáhej s učením, psaním, nápady, plánováním a programováním. Pokud si nejsi jistý, přiznej nejistotu a nevymýšlej fakta. U důležitých zdravotních, právních a finančních rozhodnutí upozorni, že je vhodné ověřit informace u kvalifikovaného odborníka. Respektuj bezpečnost a soukromí. Nežádej uživatele o hesla, ověřovací kódy ani citlivé osobní údaje. Odpovídej přehledně, ale ne zbytečně dlouze."
@@ -60,25 +63,24 @@ export default async (req) => {
           },
           contents,
           generationConfig: { temperature: 0.75, maxOutputTokens: 1800 }
-        })
-      }
-    );
-  } catch {
-    return json({ error: "Nepodařilo se připojit k AI službě. Zkus to později." }, 502);
-  }
-
-  const result = await upstream.json().catch(() => ({}));
-  if (!upstream.ok) {
-    if (upstream.status === 429) {
-      return json({ error: "AI právě dosáhla limitu požadavků. Počkej chvíli a zkus to znovu." }, 429);
+          })
+        }
+      );
+    } catch {
+      return json({ error: "Nepodařilo se připojit k AI službě. Zkus to později." }, 502);
     }
-    const providerMessage = result?.error?.message;
-    return json({
-      error: providerMessage
-        ? `AI služba: ${String(providerMessage).slice(0, 260)}`
-        : "AI služba požadavek odmítla. Zkontroluj API klíč a název modelu."
-    }, 502);
+    result = await upstream.json().catch(() => ({}));
+    if (upstream.ok) break;
+    const message = String(result?.error?.message || "");
+    const temporary = upstream.status === 429 || upstream.status >= 500 || /high demand|overloaded|temporar/i.test(message);
+    if (!temporary || model === modelsToTry[modelsToTry.length - 1]) {
+      if (upstream.status === 429) {
+        return json({ error: "AI právě dosáhla limitu požadavků. Počkej chvíli a zkus to znovu." }, 429);
+      }
+      return json({ error: message ? `AI služba: ${message.slice(0, 260)}` : "AI služba požadavek odmítla. Zkontroluj API klíč a název modelu." }, 502);
+    }
   }
+  if (!upstream?.ok) return json({ error: "AI je momentálně přetížená. Zkus to prosím za chvíli." }, 502);
 
   const reply = result?.candidates?.[0]?.content?.parts
     ?.map(part => typeof part.text === "string" ? part.text : "")
