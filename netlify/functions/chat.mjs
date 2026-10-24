@@ -71,8 +71,8 @@ export default async (req) => {
     return json({ error: "Poslední zpráva musí být od uživatele." }, 400);
   }
 
-  const primaryModel = process.env.GEMINI_MODEL || "gemini-3.6-flash";
-  const modelsToTry = [...new Set([primaryModel, "gemini-3.5-flash-lite"])];
+  const primaryModel = process.env.GEMINI_MODEL || "gemini-3.8-flash";
+  const modelsToTry = [...new Set([primaryModel, "gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite"])];
   let lastStatus = 502;
   let lastMessage = "";
 
@@ -125,9 +125,15 @@ export default async (req) => {
 
     if (temporary) continue;
 
+    if (upstream.status === 400 && /model|not found|unsupported/i.test(lastMessage)) {
+      continue;
+    }
+
     if (upstream.status === 400 || upstream.status === 403) {
       return json({
-        error: "AI požadavek odmítla. Zkontroluj v Netlify API klíč a název modelu."
+        error: upstream.status === 403
+          ? "AI odmítla přístup. V Netlify zkontroluj GEMINI_API_KEY a oprávnění klíče."
+          : "AI odmítla požadavek. Zkus kratší zprávu nebo začni novou konverzaci."
       }, 502);
     }
 
@@ -135,12 +141,12 @@ export default async (req) => {
   }
 
   if (lastStatus === 429) {
-    return json({ error: "AI má právě vysoký provoz nebo jsi dosáhl limitu. Počkej chvíli a zkus to znovu." }, 429);
+    return json({ error: "AI má právě vysoký provoz nebo byl dosažen limit. Počkej chvíli a zkus to znovu." }, 429);
   }
 
   return json({
-    error: lastMessage
-      ? "Kivora se teď nemůže spojit s AI službou. Zkus to za chvíli znovu."
-      : "AI je momentálně nedostupná. Zkus to prosím za chvíli."
+    error: lastMessage && /API key|api_key|permission|unauthorized/i.test(lastMessage)
+      ? "Přístup k AI není povolen. Zkontroluj GEMINI_API_KEY v Netlify."
+      : "AI je momentálně nedostupná. Zkus to za chvíli; pokud problém trvá, zkontroluj nasazení funkce a GEMINI_API_KEY v Netlify."
   }, 502);
 };
